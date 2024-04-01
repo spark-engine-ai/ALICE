@@ -8,14 +8,16 @@ import {
 } from "@deepgram/sdk";
 import { useState, useEffect, useCallback, use } from "react";
 import { useQueue } from "@uidotdev/usehooks";
-import Dg from "./dg.svg";
-import Recording from "./recording.svg";
+import config from '../spark.config'
 import Image from "next/image";
 import axios from "axios";
 import Siriwave from 'react-siriwave';
 import AudioSphere from './AudioSphere';
-
 import ChatGroq from "groq-sdk";
+
+let conversationHistory = [
+  { role: "assistant", content: "Initial assistant message or config content" }
+];
 
 export default function Microphone() {
   const { add, remove, first, size, queue } = useQueue<any>([]);
@@ -37,11 +39,9 @@ export default function Microphone() {
 
   const startMicrophone = async () => {
     try {
-      // Stop any existing microphone recording
       microphone?.stop();
       userMedia?.getTracks().forEach(track => track.stop());
 
-      // Restart the microphone
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const micRecorder = new MediaRecorder(stream);
 
@@ -128,7 +128,7 @@ export default function Microphone() {
       console.log("connecting to deepgram");
       const deepgram = createClient(apiKey?.key ?? "");
       const connection = deepgram.listen.live({
-        model: "nova",
+        model: config.deepgram?.model || "nova",
         interim_results: false,
         language: "en-US",
         smart_format: true,
@@ -156,28 +156,27 @@ export default function Microphone() {
           setCaption(caption);
           if (data.is_final) {
             if (groqClient) {
-              const completion = groqClient.chat.completions
-                .create({
-                  messages: [
-                    {
-                      role: "assistant",
-                      content: "You are an annoying chatbot named Doug Jackson who laughs and talks in old english about flying to boston to get away from the wife. Be as short as possible, usually responding in just a couple words. YOU MUST NEVER GO ABOVE 15 WORDS",
-                    },
-                    {
-                      role: "user",
-                      content: caption,
-                    }
-                  ],
-                  model: "mixtral-8x7b-32768",
+              conversationHistory = [
+                ...conversationHistory,
+                { role: "user", content: caption }
+              ].slice(-7);
+
+              if (groqClient) {
+                const completion = groqClient.chat.completions.create({
+                  messages: conversationHistory,
+                  model: config.groq?.model || 'mixtral-8x7b-32768',
                 })
                 .then((chatCompletion) => {
+                  const newAIResponse = { role: "assistant", content: chatCompletion.choices[0]?.message?.content || "" };
+                  conversationHistory = [...conversationHistory, newAIResponse].slice(-7);
+
                   if (neetsApiKey) {
                     setCaption(chatCompletion.choices[0]?.message?.content || "");
                     axios.post("https://api.neets.ai/v1/tts", {
                       text: chatCompletion.choices[0]?.message?.content || "",
-                      voice_id: 'us-male-2',
+                      voice_id: config.voice.voiceId || "us-female-13",
                       params: {
-                        model: 'style-diff-500'
+                        model: config.voice.model || "ar-diff-50k"
                       }
                     },
                     {
@@ -192,10 +191,8 @@ export default function Microphone() {
                     const url = URL.createObjectURL(blob);
                     const newAudioElement = new Audio(url);
 
-                    // Update state with the new audio element
                     setAudio(newAudioElement);
 
-                    // Play the new audio
                     newAudioElement.play().then(() => {
                       console.log('Audio playback started.');
                       if ('captureStream' in newAudioElement) {
