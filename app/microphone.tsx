@@ -155,7 +155,6 @@ export default function Microphone() {
                   isAudioPlaying = true;
           setCaption(caption);
           if (data.is_final) {
-            if (groqClient) {
               conversationHistory = [
                 ...conversationHistory,
                 { role: "user", content: caption }
