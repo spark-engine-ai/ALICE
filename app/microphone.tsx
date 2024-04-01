@@ -16,7 +16,7 @@ import AudioSphere from './AudioSphere';
 import ChatGroq from "groq-sdk";
 
 let conversationHistory = [
-  { role: "assistant", content: "Initial assistant message or config content" }
+  { role: "assistant", content: `${config.groq?.content}` }
 ];
 
 export default function Microphone() {
