@@ -33,7 +33,7 @@ module.exports = {
     model: "mixtral-8x7b-32768"
   },
   voice: {
-    voiceId: "us-female-13",
-    model: "ar-diff-50k"
+    voiceId: "us-female-2",
+    model: "style-diff-500"
   }
 };
