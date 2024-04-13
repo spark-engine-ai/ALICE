@@ -140,10 +140,12 @@ export default function Microphone() {
       });
 
       connection.on(LiveTranscriptionEvents.Close, () => {
-        console.log("connection closed");
-        setListening(false);
-        setApiKey(null);
-        setConnection(null);
+    setTimeout(() => {
+      console.log("connection closed");
+      setListening(false);
+      setApiKey(null);
+      setConnection(null);
+    }, 500);
       });
 
       connection.on(LiveTranscriptionEvents.Transcript, (data) => {
