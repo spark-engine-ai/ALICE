@@ -43,4 +43,4 @@ npm run dev
 
 ## Author
 
-[SERKAN DAYICIK](https://www.linkedin.com/in/serkandyck/)
+[SPARK ENGINE](https://sparkengine.ai/)
